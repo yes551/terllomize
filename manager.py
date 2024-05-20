@@ -31,3 +31,21 @@ def purge_data():
     else:
         print("Data purge canceled.")
 
+
+parser = argparse.ArgumentParser(description="System management script")
+subparsers = parser.add_subparsers(dest='command')
+
+create_admin_parser = subparsers.add_parser('create-admin', help='Create system admin')
+create_admin_parser.add_argument('--username', type=str, help='Admin username', required=True)
+create_admin_parser.add_argument('--password', type=str, help='Admin password', required=True)
+
+purge_data_parser = subparsers.add_parser('purge-data', help='Purge all data')
+
+args = parser.parse_args()
+
+if args.command == 'create-admin':
+    create_admin(args.username, args.password)
+elif args.command == 'purge-data':
+    purge_data()
+else:
+    parser.print_help()
