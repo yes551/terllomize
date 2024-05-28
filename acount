@@ -92,3 +92,21 @@ def is_admin(self, account):
                 table.add_row(str(idx), row['Username'], row['Email'], row['Role'])
 
             console.print(table)
+# Prompt for user selection
+            index = console.input("\nEnter the index of the user to modify (or press Enter to exit): ")
+
+            if index == "":
+                break
+
+            if not index.isdigit() or int(index) not in range(len(self.accounts)):
+                console.print("[bold red]Error:[/bold red] Invalid index.")
+                continue
+
+            index = int(index)
+            user_role = self.accounts.at[index, 'Role']
+            new_role = 'Inactive' if user_role != 'Inactive' else 'user'
+            self.accounts.at[index, 'Role'] = new_role
+            self.save_accounts()
+
+            console.print(f"[bold green]User at index {index} has been changed to {new_role}.[/bold green]")
+            logger.info("User role modified: {} -> {}", self.accounts.at[index, 'Username'], new_role)
