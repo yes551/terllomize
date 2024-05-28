@@ -1,0 +1,16 @@
+import pandas as pd
+import hashlib
+from rich.console import Console
+from rich.table import Table
+from loguru import logger
+
+console = Console()
+
+def load_admin_credentials(admin_file='.\\APelahishokr\\admin.txt'):
+    with open(admin_file, 'r') as file:
+        lines = file.read().splitlines()
+    if len(lines) < 2 or not lines[0].startswith('Username:') or not lines[1].startswith('Password:'):
+        raise ValueError("Admin file must contain a username and a password in the format 'username:' and 'password:'.")
+    admin_username = lines[0].split('Username:')[1].strip()
+    admin_password = lines[1].split('Password:')[1].strip()
+    return admin_username, admin_password
