@@ -14,3 +14,40 @@ def load_admin_credentials(admin_file='.\\APelahishokr\\admin.txt'):
     admin_username = lines[0].split('Username:')[1].strip()
     admin_password = lines[1].split('Password:')[1].strip()
     return admin_username, admin_password
+class UserAccount:
+    def __init__(self, accounts_file):
+        self.accounts_file = accounts_file
+        self.accounts = self.load_accounts()
+        logger.add(".\\APelahishokr\\application.log", rotation="1 MB")
+
+    def load_accounts(self):
+        logger.info("Loading accounts from {}", self.accounts_file)
+        try:
+            return pd.read_csv(self.accounts_file)
+        except FileNotFoundError:
+            logger.warning("Accounts file not found, creating a new one.")
+            return pd.DataFrame(columns=['Username', 'Password', 'Email', 'Role'])
+
+    def save_accounts(self):
+        logger.info("Saving accounts to {}", self.accounts_file)
+        self.accounts.to_csv(self.accounts_file, index=False)
+
+    def encrypt_password(self, password):
+        logger.info("Encrypting password")
+        return hashlib.sha256(password.encode()).hexdigest()
+
+    def sign_up(self, username, password, email, role='user'):
+        logger.info("Attempting to sign up user: {}", username)
+        admin_user, _ = load_admin_credentials()
+        if username in self.accounts['Username'].values or email in self.accounts['Email'].values or username == admin_user:
+            console.print("[bold red]Error:[/bold red] Username or email already exists.")
+            logger.warning("Sign up failed: Username or email already exists")
+            return False
+
+        encrypted_password = self.encrypt_password(password)
+        new_account = pd.DataFrame({
+            'Username': [username],
+            'Password': [encrypted_password],
+            'Email': [email],
+            'Role': [role]
+        })
