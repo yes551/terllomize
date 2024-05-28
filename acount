@@ -51,3 +51,28 @@ class UserAccount:
             'Email': [email],
             'Role': [role]
         })
+ self.accounts = pd.concat([self.accounts, new_account], ignore_index=True)
+        self.save_accounts()
+        logger.info("User signed up successfully: {}", username)
+        return True
+
+    def login(self, username, password):
+        admin_user, admin_pass = load_admin_credentials()
+        if (username == admin_user and password == admin_pass):
+            return pd.DataFrame({"Username": [admin_user], "Password": [admin_pass], "Email": [""], "Role": ["admin"]}).iloc[0]
+
+        logger.info("Attempting to login user: {}", username)
+        encrypted_password = self.encrypt_password(password)
+        account = self.accounts[(self.accounts['Username'] == username) & (self.accounts['Password'] == encrypted_password)]
+        if len(account) == 0:
+            console.print("[bold red]Error:[/bold red] Invalid username or password.")
+            logger.warning("Login failed: Invalid username or password")
+            return None
+        elif account["Role"].values[0] == "Inactive":
+            console.print("[bold red]Error:[/bold red] Your account has been deactivated.")
+            logger.warning("Login failed: deactivated account login attempt")
+            return None
+        else:
+            console.print("[bold green]Login successful![/bold green]")
+            logger.info("User logged in successfully: {}", username)
+            return account.iloc[0]
