@@ -76,3 +76,19 @@ class UserAccount:
             console.print("[bold green]Login successful![/bold green]")
             logger.info("User logged in successfully: {}", username)
             return account.iloc[0]
+def is_admin(self, account):
+        return account['Role'] == 'admin'
+
+    def modify_user_status(self):
+        while True:
+            # Display all accounts
+            table = Table(show_header=True, header_style="bold magenta")
+            table.add_column("Index", style="dim", width=6)
+            table.add_column("Username")
+            table.add_column("Email")
+            table.add_column("Role")
+
+            for idx, row in self.accounts.iterrows():
+                table.add_row(str(idx), row['Username'], row['Email'], row['Role'])
+
+            console.print(table)
