@@ -178,3 +178,54 @@ def test_04_add_user_to_project(self):
         with self.assertLogs('main.logger', level='WARNING') as log:
             remove_project(projects, 'nonexistent_project_id')
         self.assertIn('Project ID not found.', log.output[-1])
+
+    def test_12_view_projects(self):
+        print("Running test 12: test_view_projects")
+        projects = create_project({}, 'New Project', 'leader1')
+        with patch('builtins.input', return_value=''):
+            with patch('rich.console.Console.print') as mock_print:
+                view_projects(projects, 'leader1', 'user')
+                mock_print.assert_called()
+
+    def test_13_add_task(self):
+        print("Running test 13: test_add_task")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        project = projects[project_id]
+        with patch('builtins.input', side_effect=[
+            'Task 1', 'Description 1', '2024-05-28', '2024-06-28', 'user1', 'High', 'ToDo', 'No comments'
+        ]):
+            add_task(project)
+        self.assertEqual(len(project['tasks']), 1)
+        task_id = list(project['tasks'].keys())[0]
+        task = project['tasks'][task_id]
+        self.assertEqual(task['title'], 'Task 1')
+
+    def test_14_view_tasks_for_project(self):
+        print("Running test 14: test_view_tasks_for_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        project = projects[project_id]
+        with patch('builtins.input', side_effect=[
+            'Task 1', 'Description 1', '2024-05-28', '2024-06-28', 'user1', 'High', 'ToDo', 'No comments'
+        ]):
+            add_task(project)
+        with patch('rich.console.Console.print') as mock_print:
+            view_tasks_for_project(project, 'leader1', 'user')
+            mock_print.assert_called()
+
+    def test_15_can_access_project(self):
+        print("Running test 15: test_can_access_project")
+        project = {
+            'title': 'New Project',
+            'leader': 'leader1',
+            'users': ['user1'],
+            'tasks': {}
+        }
+        self.assertTrue(can_access_project(project, 'leader1', 'user'))
+        self.assertTrue(can_access_project(project, 'user1', 'user'))
+        self.assertFalse(can_access_project(project, 'user2', 'user'))
+        self.assertTrue(can_access_project(project, 'user2', 'admin'))
+
+if __name__ == '__main__':
+    unittest.main()
