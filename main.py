@@ -1,4 +1,3 @@
-
 import json
 import os
 import uuid
@@ -164,6 +163,7 @@ def view_projects(projects, username, role):
         print(project)
         manage_project(projects, id, project, username,role)
         save_projects(projects_file, projects)
+
 def manage_project(projects, project_id, project, username,role):
     while True:
         console.print(f"\n[bold]Managing Project: {project['title']}[/bold]")
@@ -272,6 +272,7 @@ def update_task(task, username):
             break
         else:
             console.print("[bold red]Error:[/bold red] Invalid choice. Please enter a number between 1 and 9.")
+
 def record_task_history(task, field, new_value):
     task.setdefault('history', []).append({
         'field': field,
@@ -383,7 +384,7 @@ def view_tasks(projects, username, role):
 
 
 
-def main_menu(projects, username, account, projects_file):
+def main_menu(projects, username, account, projects_file,user_account):
     while True:
         if account is not None and account["Role"] != "admin":
             # User Menu
@@ -425,7 +426,7 @@ def main_menu(projects, username, account, projects_file):
             elif user_choice == '3':
                 view_tasks(projects, username, account["Role"])
             elif user_choice == '4':
-                manage_users(projects, username, account["Role"], projects_file)  # Assuming there's a function to manage users
+                user_account.modify_user_status() 
             elif user_choice == '5':
                 break
             else:
@@ -439,6 +440,7 @@ def main_menu(projects, username, account, projects_file):
 if __name__ == "__main__":
     accounts_file = ".\\APelahishokr\\accounts.csv"
     projects_file = ".\\APelahishokr\\projects.json"
+    
     user_account = UserAccount(accounts_file)
     projects = load_projects(projects_file)
     while True:
@@ -464,5 +466,4 @@ if __name__ == "__main__":
     
     projects = load_projects(projects_file)
 
-    main_menu(projects, account["Username"], account,projects_file)
-
+    main_menu(projects, account["Username"], account,projects_file,user_account)
