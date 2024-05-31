@@ -61,3 +61,53 @@ class TestUserAccount(unittest.TestCase):
         account = self.user_account.login('testuser', 'password123')
         self.assertIsNotNone(account)
         self.assertEqual(account['Username'], 'testuser')
+def test_03_login_fail(self):
+        print("Running test 03: test_login_fail")
+        self.user_account.sign_up('testuser', 'password123', 'testuser@example.com')
+        account = self.user_account.login('testuser', 'wrongpassword')
+        self.assertIsNone(account)
+
+    def test_04_duplicate_sign_up(self):
+        print("Running test 04: test_duplicate_sign_up")
+        self.user_account.sign_up('testuser', 'password123', 'testuser@example.com')
+        result = self.user_account.sign_up('testuser', 'password123', 'testuser@example.com')
+        self.assertFalse(result)
+
+
+class TestProjectManagement(unittest.TestCase):
+
+    def setUp(self):
+        # Create a temporary projects file
+        self.projects_file = 'test_projects.json'
+        # Mocking the logger to avoid file creation
+        patch('main.logger').start()
+
+    def tearDown(self):
+        # Remove the temporary files after tests
+        if os.path.exists(self.projects_file):
+            os.remove(self.projects_file)
+        patch.stopall()
+
+    def test_01_load_projects(self):
+        print("Running test 01: test_load_projects")
+        with open(self.projects_file, 'w') as file:
+            json.dump({}, file)
+        projects = load_projects(self.projects_file)
+        self.assertEqual(projects, {})
+
+    def test_02_save_projects(self):
+        print("Running test 02: test_save_projects")
+        projects = {'proj1': {'title': 'Project 1', 'leader': 'leader1'}}
+        save_projects(self.projects_file, projects)
+        with open(self.projects_file, 'r') as file:
+            loaded_projects = json.load(file)
+        self.assertEqual(loaded_projects, projects)
+
+    def test_03_create_project(self):
+        print("Running test 03: test_create_project")
+        projects = {}
+        projects = create_project(projects, 'New Project', 'leader1')
+        self.assertEqual(len(projects), 1)
+        project_id = list(projects.keys())[0]
+        self.assertEqual(projects[project_id]['title'], 'New Project')
+        self.assertEqual(projects[project_id]['leader'], 'leader1')
