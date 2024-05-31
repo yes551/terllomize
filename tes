@@ -1,0 +1,63 @@
+import unittest
+import os
+import pandas as pd
+import json
+from unittest.mock import patch, mock_open
+from io import StringIO
+from account import UserAccount
+from main import (
+    load_projects,
+    save_projects,
+    create_project,
+    add_user_to_project,
+    remove_user_from_project,
+    add_task,
+    view_tasks_for_project,
+    remove_task_from_project,
+    remove_project,
+    view_projects,
+    can_access_project,
+    manage_tasks,
+    update_task_status_or_comment
+)
+
+class TestUserAccount(unittest.TestCase):
+
+    def setUp(self):
+        # Create a temporary accounts file and admin credentials
+        self.accounts_file = 'test_accounts.csv'
+        self.admin_file = 'test_admin.txt'
+        self.projects_file = 'test_projects.json'
+
+        with open(self.admin_file, 'w') as file:
+            file.write("Username:admin\nPassword:adminpass")
+
+        # Mocking the logger to avoid file creation
+        patch('account.logger').start()
+
+        # Initialize the UserAccount class
+        self.user_account = UserAccount(self.accounts_file)
+
+    def tearDown(self):
+        # Remove the temporary files after tests
+        if os.path.exists(self.accounts_file):
+            os.remove(self.accounts_file)
+        if os.path.exists(self.admin_file):
+            os.remove(self.admin_file)
+        if os.path.exists(self.projects_file):
+            os.remove(self.projects_file)
+        patch.stopall()
+
+    def test_01_sign_up(self):
+        print("Running test 01: test_sign_up")
+        self.assertTrue(self.user_account.sign_up('testuser', 'password123', 'testuser@example.com'))
+        accounts = pd.read_csv(self.accounts_file)
+        self.assertEqual(len(accounts), 1)
+        self.assertEqual(accounts.iloc[0]['Username'], 'testuser')
+
+    def test_02_login(self):
+        print("Running test 02: test_login")
+        self.user_account.sign_up('testuser', 'password123', 'testuser@example.com')
+        account = self.user_account.login('testuser', 'password123')
+        self.assertIsNotNone(account)
+        self.assertEqual(account['Username'], 'testuser')
