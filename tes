@@ -111,3 +111,70 @@ class TestProjectManagement(unittest.TestCase):
         project_id = list(projects.keys())[0]
         self.assertEqual(projects[project_id]['title'], 'New Project')
         self.assertEqual(projects[project_id]['leader'], 'leader1')
+def test_04_add_user_to_project(self):
+        print("Running test 04: test_add_user_to_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        result = add_user_to_project(projects, project_id, 'user1')
+        self.assertTrue(result)
+        self.assertIn('user1', projects[project_id]['users'])
+
+    def test_05_add_existing_user_to_project(self):
+        print("Running test 05: test_add_existing_user_to_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        add_user_to_project(projects, project_id, 'user1')
+        result = add_user_to_project(projects, project_id, 'user1')
+        self.assertFalse(result)
+
+    def test_06_remove_user_from_project(self):
+        print("Running test 06: test_remove_user_from_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        add_user_to_project(projects, project_id, 'user1')
+        result = remove_user_from_project(projects, project_id, 'user1')
+        self.assertTrue(result)
+        self.assertNotIn('user1', projects[project_id]['users'])
+
+    def test_07_remove_nonexistent_user_from_project(self):
+        print("Running test 07: test_remove_nonexistent_user_from_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        result = remove_user_from_project(projects, project_id, 'user1')
+        self.assertFalse(result)
+
+    def test_08_remove_task_from_project(self):
+        print("Running test 08: test_remove_task_from_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        project = projects[project_id]
+        with patch('builtins.input', side_effect=[
+            'Task 1', 'Description 1', '2024-05-28', '2024-06-28', 'user1', 'High', 'ToDo', 'No comments'
+        ]):
+            add_task(project)
+        task_id = list(project['tasks'].keys())[0]
+        remove_task_from_project(project, task_id)
+        self.assertEqual(len(project['tasks']), 0)
+
+    def test_09_remove_nonexistent_task_from_project(self):
+        print("Running test 09: test_remove_nonexistent_task_from_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        project = projects[project_id]
+        with self.assertLogs('main.logger', level='WARNING') as log:
+            remove_task_from_project(project, 'nonexistent_task_id')
+        self.assertIn('Task ID not found.', log.output[-1])
+
+    def test_10_remove_project(self):
+        print("Running test 10: test_remove_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        project_id = list(projects.keys())[0]
+        remove_project(projects, project_id)
+        self.assertEqual(len(projects), 0)
+
+    def test_11_remove_nonexistent_project(self):
+        print("Running test 11: test_remove_nonexistent_project")
+        projects = create_project({}, 'New Project', 'leader1')
+        with self.assertLogs('main.logger', level='WARNING') as log:
+            remove_project(projects, 'nonexistent_project_id')
+        self.assertIn('Project ID not found.', log.output[-1])
