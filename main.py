@@ -164,3 +164,111 @@ def view_projects(projects, username, role):
         print(project)
         manage_project(projects, id, project, username,role)
         save_projects(projects_file, projects)
+def manage_project(projects, project_id, project, username,role):
+    while True:
+        console.print(f"\n[bold]Managing Project: {project['title']}[/bold]")
+        console.print("1. [bold]Add User to Project[/bold]")
+        console.print("2. [bold]Remove User from Project[/bold]")
+        console.print("3. [bold]Add Task[/bold]")
+        console.print("4. [bold]Manage Tasks[/bold]")
+        console.print("5. [bold]Back to Projects[/bold]")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            user_to_add = input("Enter the username to add: ")
+            add_user_to_project(projects, project_id, user_to_add)
+        elif choice == '2':
+            user_to_remove = input("Enter the username to remove: ")
+            remove_user_from_project(projects, project_id, user_to_remove)
+        elif choice == '3':
+            add_task(project)
+        elif choice == '4':
+            manage_tasks(project,username,role)
+        elif choice == '5':
+            break
+        else:
+            console.print("[bold red]Invalid choice.[/bold red] Please enter a valid option.")
+
+
+def manage_tasks(project,username,role):
+    while True:
+        view_tasks_for_project(project, username,role)
+        task_index = input("Enter the Task Index you want to manage (or press Enter to go back): ")
+        if not task_index:
+            break
+
+        try:
+            task_index = int(task_index)
+            task_list = list(project['tasks'].items())
+            if 0 <= task_index and task_index< len(task_list):
+                task_id, task = task_list[task_index]
+                print(0)
+                view_task_history(task)
+
+                if not (can_access_task(task, project['leader'], username, role) and username!=project['leader'] and role!='admin'):
+                   update_task(task, project['leader'])
+                else:
+                    update_task_status_or_comment(task, username)
+            else:
+                console.print("[bold red]Error:[/bold red] Invalid task index.")
+        except ValueError:
+            console.print("[bold red]Error:[/bold red] Invalid input. Please enter a valid task index.")
+
+def can_access_task(task, project_leader, username, role):
+    return username == project_leader or username in task['assigned_to'] or role == "admin"
+
+def update_task(task, username):
+    while True:
+        console.print(f"\n[bold]Updating Task: {task['title']}[/bold]")
+        console.print("1. [bold]Title[/bold]")
+        console.print("2. [bold]Description[/bold]")
+        console.print("3. [bold]Start Date[/bold]")
+        console.print("4. [bold]End Date[/bold]")
+        console.print("5. [bold]Assigned Users[/bold]")
+        console.print("6. [bold]Priority[/bold]")
+        console.print("7. [bold]Status[/bold]")
+        console.print("8. [bold]Comments[/bold]")
+        console.print("9. [bold]Finish Update[/bold]")
+
+        choice = input("Enter the number of the attribute you want to update (or '9' to finish): ")
+
+        if choice == '1':
+            task['title'] = input(f"Enter new title (leave blank to keep '{task['title']}'): ") or task['title']
+            record_task_history(task, 'title', task['title'])
+        elif choice == '2':
+            task['description'] = input(f"Enter new description (leave blank to keep '{task['description']}'): ") or task['description']
+            record_task_history(task, 'description', task['description'])
+        elif choice == '3':
+            task['start_date'] = input(f"Enter new start date (leave blank to keep '{task['start_date']}'): ") or task['start_date']
+            record_task_history(task, 'start_date', task['start_date'])
+        elif choice == '4':
+            task['end_date'] = input(f"Enter new end date (leave blank to keep '{task['end_date']}'): ") or task['end_date']
+            record_task_history(task, 'end_date', task['end_date'])
+        elif choice == '5':
+            new_assigned_to = input(f"Enter new assigned users (comma-separated, leave blank to keep '{', '.join(task['assigned_to'])}'): ").split(',')
+            task['assigned_to']+=new_assigned_to
+            record_task_history(task, 'assigned_to', ', '.join(task['assigned_to']))
+        elif choice == '6':
+            new_pr = input(f"Enter new priority (leave blank to keep '{task['priority']}'): ") or task['priority']
+            try:
+                task['priority']=TaskPriority[new_pr.upper()].value
+            except ValueError:
+                console.print("[bold red]Error:[/bold red] Invalid input.")
+            record_task_history(task, 'priority', task['priority'])
+        elif choice == '7':
+            new_status = input(f"Enter new status (leave blank to keep '{task['status']}'): ") or task['status']
+            try:
+                task['status']=TaskPriority[new_status.upper()].value
+            except ValueError:
+                console.print("[bold red]Error:[/bold red] Invalid input.")
+            record_task_history(task, 'status', new_status)
+            task['status'] = new_status
+        elif choice == '8':
+            task['comments'] = input(f"Enter new comments (leave blank to keep '{task['comments']}'): ") or task['comments']
+            record_task_history(task, 'comments', task['comments'])
+        elif choice == '9':
+            console.print("[bold green]Task update complete![/bold green]")
+            break
+        else:
+            console.print("[bold red]Error:[/bold red] Invalid choice. Please enter a number between 1 and 9.")
