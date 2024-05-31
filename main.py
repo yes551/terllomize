@@ -272,3 +272,197 @@ def update_task(task, username):
             break
         else:
             console.print("[bold red]Error:[/bold red] Invalid choice. Please enter a number between 1 and 9.")
+def record_task_history(task, field, new_value):
+    task.setdefault('history', []).append({
+        'field': field,
+        'old': task.get(field),
+        'new': new_value,
+        'updated_by': username,
+        'date': str(datetime.now())
+    })
+
+def update_task_status_or_comment(task, username):
+    while True:
+        console.print(f"\n[bold]Updating Task: {task['title']}[/bold]")
+        console.print("1. [bold]Status[/bold]")
+        console.print("2. [bold]Comments[/bold]")
+        console.print("3. [bold]Exit[/bold]")
+
+        choice = input("Enter your choice: ")
+
+        if choice == '1':
+            new_status = input(f"Enter new status (leave blank to keep '{task['status']}'): ") or task['status']
+            try:
+                new_status=TaskPriority[new_status.upper()].value
+            except ValueError:
+                console.print("[bold red]Error:[/bold red] Invalid input.")
+            record_task_history(task, 'status', new_status)
+            task['status'] = new_status
+            console.print("[bold green]Task status updated successfully![/bold green]")
+        elif choice == '2':
+            task['comments'] =task['comments']+'\n'+username + ": "+input(f"Enter new comments : ")
+            record_task_history(task, 'comments', task['comments'])
+            console.print("[bold green]Task comments updated successfully![/bold green]")
+        elif choice == '3':
+            break
+        else:
+            console.print("[bold red]Error:[/bold red] Invalid choice. Please enter a number between 1 and 3.")
+def view_task_history(task):
+    console.print(f"[bold cyan]History for Task: {task['title']}[/bold cyan]")
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Field", style="dim", width=12)
+    table.add_column("Old Value")
+    table.add_column("New Value")
+    table.add_column("Updated By")
+
+    for record in task.get('history', []):
+        table.add_row(record['field'], record['old'], record['new'], record['updated_by'])
+
+    console.print(table)
+def view_tasks_for_project(project, username,role):
+    console.print(f"[bold cyan]Tasks in Project: {project['title']}[/bold cyan]")
+
+    table = Table(show_header=True, header_style="bold magenta")
+    table.add_column("Task ID", style="dim", width=12)
+    table.add_column("Title")
+    table.add_column("Priority")
+    table.add_column("Status")
+    table.add_column("Comments")
+
+    for task_id, task in project['tasks'].items():
+        table.add_row(str(task_id), task['title'], task['priority'], task['status'], task['comments'])
+
+    console.print(table)
+
+
+def view_tasks(projects, username, role):
+    user_projects = {pid: proj for pid, proj in projects.items() if can_access_project(proj, username, role)}
+
+    console.print("[bold cyan]Tasks you have access to:[/bold cyan]")
+    for project_id, project in user_projects.items():
+        console.print(f"\n[bold]Project ID: {project_id}[/bold], Title: {project['title']}")
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Task ID", style="dim", width=12)
+        table.add_column("Title")
+        table.add_column("Description")
+        table.add_column("Priority")
+        table.add_column("Status")
+        table.add_column("Comments")
+        user_tasks = {task_id: task for task_id, task in project['tasks'].items() if len(project['tasks'])!=0 and (username in task["assigned_to"] or role=="admin" or username==project["leader"])}
+        for task_id, task in user_tasks.items():
+            table.add_row(str(task_id), task['title'],task['description'], task['priority'], task['status'], task['comments'])
+
+        console.print(table)
+
+    while True:
+        task_project_id = input("Enter the Project ID of the task you want to update (or press Enter to go back): ")
+        if not task_project_id:
+            break
+
+        if task_project_id not in user_projects:
+            console.print("[bold red]Error:[/bold red] Invalid project ID or you don't have access to this project.")
+            continue
+
+        task_id = input("Enter the Task ID to update (or press Enter to go back): ")
+        if not task_id:
+            break
+
+        try:
+            if task_id in user_projects[task_project_id]['tasks']:
+                if username==project['leader'] or role=='admin':
+                   update_task(task,username)
+                else:
+                    update_task_status_or_comment(task, username)
+            else:
+                console.print("[bold red]Error:[/bold red] Invalid Task ID.")
+        except ValueError:
+            console.print("[bold red]Error:[/bold red] Invalid input. Please enter a valid Task ID.")
+
+
+
+
+
+def main_menu(projects, username, account, projects_file):
+    while True:
+        if account is not None and account["Role"] != "admin":
+            # User Menu
+            console.print("[bold cyan]User Menu[/bold cyan]")
+            console.print("1. [bold]Create Project[/bold]")
+            console.print("2. [bold]View Projects[/bold]")
+            console.print("3. [bold]View Tasks[/bold]")
+            console.print("4. [bold]Log Out[/bold]")
+            user_choice = input("Enter your choice: ")
+
+            if user_choice == '1':
+                title = input("Enter project title: ")
+                create_project(projects, title, username)
+                save_projects(projects_file, projects)
+            elif user_choice == '2':
+                view_projects(projects, username, account["Role"])
+            elif user_choice == '3':
+                view_tasks(projects, username, account["Role"])
+            elif user_choice == '4':
+                break
+            else:
+                console.print("[bold red]Invalid choice.[/bold red] Please enter a valid option.")
+        elif account["Role"] == "admin":
+            # Admin Menu
+            console.print("[bold cyan]Admin Menu[/bold cyan]")
+            console.print("1. [bold]Create Project[/bold]")
+            console.print("2. [bold]View Projects[/bold]")
+            console.print("3. [bold]View Tasks[/bold]")
+            console.print("4. [bold]Manage Users[/bold]")
+            console.print("5. [bold]Log Out[/bold]")
+            user_choice = input("Enter your choice: ")
+
+            if user_choice == '1':
+                title = input("Enter project title: ")
+                create_project(projects, title, username)
+                save_projects(projects_file, projects)
+            elif user_choice == '2':
+                view_projects(projects, username, account["Role"])
+            elif user_choice == '3':
+                view_tasks(projects, username, account["Role"])
+            elif user_choice == '4':
+                manage_users(projects, username, account["Role"], projects_file)  # Assuming there's a function to manage users
+            elif user_choice == '5':
+                break
+            else:
+                console.print("[bold red]Invalid choice.[/bold red] Please enter a valid option.")
+        else:
+            console.print("[bold red]Error:[/bold red] Account role not recognized.")
+            break
+
+
+
+if __name__ == "__main__":
+    accounts_file = ".\\APelahishokr\\accounts.csv"
+    projects_file = ".\\APelahishokr\\projects.json"
+    user_account = UserAccount(accounts_file)
+    projects = load_projects(projects_file)
+    while True:
+        console.print("[bold cyan]Welcome to the Project Management System[/bold cyan]")
+        console.print("1. [bold]Sign Up[/bold]")
+        console.print("2. [bold]Log In[/bold]")
+        console.print("3. [bold]Exit[/bold]")
+
+        choice = input("Enter your choice: ")
+        account=""
+        if choice == '1':
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            email = input("Enter email: ")
+            user_account.sign_up(username, password, email)
+        elif choice == '2':
+            username = input("Enter username: ")
+            password = input("Enter password: ")
+            account = user_account.login(username, password)
+        
+        if account is not None and len(account)>0:
+            break
+    
+    projects = load_projects(projects_file)
+
+    main_menu(projects, account["Username"], account,projects_file)
+
